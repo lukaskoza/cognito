@@ -1,0 +1,154 @@
+import { CognitoIdentityProviderClient, SignUpCommand, InitiateAuthCommand, ConfirmSignUpCommand, AdminConfirmSignUpCommand, InitiateAuthCommandOutput, DeleteUserCommand, AdminDeleteUserCommand, RevokeTokenCommand } from "@aws-sdk/client-cognito-identity-provider";
+import crypto from "crypto";
+import { UsernameExistsException } from "@aws-sdk/client-cognito-identity-provider";
+import { ApplicationException } from "../../util/exceptions/ApplicationException";
+
+class AuthService {
+    private cognitoClient: CognitoIdentityProviderClient;
+    private userPoolId: string;
+    private clientId: string;
+    private clientSecret: string;
+
+    constructor() {
+        if (!process.env.AWS_REGION) {
+            throw new Error("AWS_REGION is not set");
+        }
+        if (!process.env.COGNITO_USER_POOL_ID) {
+            throw new Error("COGNITO_USER_POOL_ID is not set");
+        }
+        if (!process.env.COGNITO_CLIENT_ID) {
+            throw new Error("COGNITO_CLIENT_ID is not set");
+        }
+        if (!process.env.COGNITO_CLIENT_SECRET) {
+            throw new Error("COGNITO_CLIENT_SECRET is not set");
+        }
+        if (!process.env.AWS_ACCESS_KEY_ID) {
+            throw new Error("COGNITO_CLIENT_SECRET is not set");
+        }
+        if (!process.env.AWS_SECRET_ACCESS_KEY) {
+            throw new Error("COGNITO_CLIENT_SECRET is not set");
+        }
+
+        this.cognitoClient = new CognitoIdentityProviderClient({
+            region: process.env.AWS_REGION,
+            credentials: {
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            }
+        });
+        this.userPoolId = process.env.COGNITO_USER_POOL_ID;
+        this.clientId = process.env.COGNITO_CLIENT_ID;
+        this.clientSecret = process.env.COGNITO_CLIENT_SECRET;
+    }
+
+    private calculateSecretHash(value: string): string {
+        return crypto
+            .createHmac('SHA256', this.clientSecret)
+            .update(value + this.clientId)
+            .digest('base64');
+    }
+
+    async register(email: string, password: string) {
+        const command = new SignUpCommand({
+            ClientId: this.clientId,
+            Username: email,
+            Password: password,
+            SecretHash: this.calculateSecretHash(email),
+        });
+
+        try {
+            await this.cognitoClient.send(command);
+            await this.confirmUser(email)
+            return await this.login(email, password)
+        } catch (error) {
+            try {
+                await this.deleteUser(email)
+            } catch (error) {
+                // ignore error and throw original error, this would confuse the user because this is just rollback mechanism
+            }
+            this.handleCognitoError(error);
+        }
+    }
+
+    async deleteUser(email: string) {
+        const command = new AdminDeleteUserCommand({
+            Username: email,
+            UserPoolId: this.userPoolId
+        })
+        try {
+            return await this.cognitoClient.send(command);
+        } catch (error) {
+            this.handleCognitoError(error);
+        }
+    }
+
+    async confirmUser(email: string) {
+        const command = new AdminConfirmSignUpCommand({
+            Username: email,
+            UserPoolId: this.userPoolId
+        })
+
+        return await this.cognitoClient.send(command);
+    }
+
+
+    async login(email: string, password: string) {
+        const command = new InitiateAuthCommand({
+            AuthFlow: 'USER_PASSWORD_AUTH',
+            ClientId: this.clientId,
+            AuthParameters: {
+                USERNAME: email,
+                PASSWORD: password,
+                SECRET_HASH: this.calculateSecretHash(email)
+            }
+        });
+
+        try {
+            return await this.cognitoClient.send(command);
+        } catch (error) {
+            this.handleCognitoError(error);
+        }
+    }
+
+
+    async logout(refreshToken: string) {
+        const command = new RevokeTokenCommand({
+            Token: refreshToken,
+            ClientId: this.clientId,
+            ClientSecret: this.clientSecret,
+        });
+        try {
+            return await this.cognitoClient.send(command);
+        } catch (error) {
+            this.handleCognitoError(error);
+        }
+    }
+
+    async refreshToken(username: string, refreshToken: string) {
+        const command = new InitiateAuthCommand({
+            AuthFlow: 'REFRESH_TOKEN_AUTH',
+            ClientId: this.clientId,
+            AuthParameters: {
+                REFRESH_TOKEN: refreshToken,
+                SECRET_HASH: this.calculateSecretHash(username),
+            }
+        });
+
+        try {
+            return await this.cognitoClient.send(command);
+        } catch (error) {
+            this.handleCognitoError(error);
+        }
+    }
+
+
+    private handleCognitoError(error: any) {
+        if (error instanceof ApplicationException) throw error
+        if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
+            throw new ApplicationException(error.message);
+        }
+        throw error;
+    }
+}
+
+export const authService = new AuthService();
