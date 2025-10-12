@@ -1,7 +1,7 @@
 import { GetUserCommandOutput } from "@aws-sdk/client-cognito-identity-provider";
 import { t } from "elysia";
-import { BaseDTO } from "../../util/dto/baseDTO";
-import { ApplicationException } from "../../util/exceptions/ApplicationException";
+import { BaseDTO } from "@/modules/util/dto/baseDTO";
+import { ApplicationException } from "@/modules/util/exceptions/ApplicationException";
 
 
 export const profileSchema = t.Object({

@@ -1,12 +1,12 @@
 import { Elysia } from "elysia";
-import { authService } from "./services/AuthService";
-import { loginBody, registerBody, refreshBody } from "./model";
+import { authService } from "@/modules/auth/services/AuthService";
+import { loginBody, registerBody, refreshBody } from "@/modules/auth/model";
 import { InitiateAuthCommandOutput } from "@aws-sdk/client-cognito-identity-provider";
-import { tokenVerification } from "./services/TokenVerification";
-import { TokenDTO } from "./dto/tokenDTO";
-import { SuccessDTO } from "../util/dto/successDTO";
-import { authentificate } from "./middlewares/authentificate";
-import { ProfileDTO } from "./dto/profileDTO";
+import { tokenVerification } from "@/modules/auth/services/TokenVerification";
+import { TokenDTO } from "@/modules/auth/dto/tokenDTO";
+import { SuccessDTO } from "@/modules/util/dto/successDTO";
+import { authentificate } from "@/modules/auth/middlewares/authentificate";
+import { ProfileDTO } from "@/modules/auth/dto/profileDTO";
 
 export const authModule = new Elysia({prefix: "/auth"})
 

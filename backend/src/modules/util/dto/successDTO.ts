@@ -1,6 +1,5 @@
 import { t } from "elysia";
-import { TObject } from "@sinclair/typebox";
-import { BaseDTO } from "./baseDTO";
+import { BaseDTO } from "@/modules/util/dto/baseDTO";
 
 export const successSchema = t.Object({})
 export type SuccessSchema = typeof successSchema.static;

@@ -1,6 +1,6 @@
 import { CognitoJwtVerifier } from "aws-jwt-verify";
-import { ApplicationException } from "../../util/exceptions/ApplicationException";
-import env from "../../../config/env";
+import { ApplicationException } from "@/modules/util/exceptions/ApplicationException";
+import env from "@/config/env";
 export class TokenVerification {
 
     parse(authHeader: string | undefined): string {

@@ -1,6 +1,6 @@
 import { InitiateAuthCommandOutput } from "@aws-sdk/client-cognito-identity-provider";
 import { t } from "elysia";
-import { BaseDTO } from "../../util/dto/baseDTO";
+import { BaseDTO } from "@/modules/util/dto/baseDTO";
 
 
 export const tokenSchema = t.Object({

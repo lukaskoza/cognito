@@ -1,7 +1,7 @@
 import { CognitoIdentityProviderClient, SignUpCommand, InitiateAuthCommand, AdminConfirmSignUpCommand, AdminDeleteUserCommand, RevokeTokenCommand, GetUserCommand } from "@aws-sdk/client-cognito-identity-provider";
 import crypto from "crypto";
-import { ApplicationException } from "../../util/exceptions/ApplicationException";
-import env from "../../../config/env";
+import { ApplicationException } from "@/modules/util/exceptions/ApplicationException";
+import env from "@/config/env";
 class AuthService {
     private cognitoClient: CognitoIdentityProviderClient;
     private userPoolId: string;

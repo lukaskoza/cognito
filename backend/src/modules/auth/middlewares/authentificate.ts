@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
-import { tokenVerification } from "../services/TokenVerification";
-import { UserPayload } from "../types/user-payload";
+import { tokenVerification } from "@/modules/auth/services/TokenVerification";
+import { UserPayload } from "@/modules/auth/types/user-payload";
 
 export const authentificate = new Elysia()
     .derive({as: 'scoped'}, async ({ headers }) => {

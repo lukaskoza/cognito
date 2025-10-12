@@ -5,3 +5,9 @@ See `src/config/env.ts` for all available variables.
 ```
 bun run dev
 ```
+
+
+
+
+## Technical notes
+- `@/*` is used to import files from the src folder

@@ -1,8 +1,8 @@
 import { Elysia } from "elysia";
-import { authModule } from "./modules/auth";
-import { exceptionHandler } from "./modules/util/middlewares/exception-handler";
+import { authModule } from "@/modules/auth";
+import { exceptionHandler } from "@/modules/util/middlewares/exception-handler";
 import { swagger } from "@elysiajs/swagger";
-import env from "./config/env";
+import env from "@/config/env";
 
 const app = new Elysia()
   // Global middlewares
