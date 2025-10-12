@@ -1,0 +1,12 @@
+name: chesster
+
+services:
+  backend:
+    container_name: chesster-backend
+    build: 
+      context: ..
+      dockerfile: local/node/Dockerfile
+    ports:
+      - 3000:3000
+    volumes:
+      - ../:/app
