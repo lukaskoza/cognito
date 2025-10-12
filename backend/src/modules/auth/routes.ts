@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { authService } from "@/modules/auth/services/AuthService";
-import { loginBody, registerBody, refreshBody } from "@/modules/auth/model";
+import { loginBody, registerBody, refreshBody } from "@/modules/auth/schema";
 import { InitiateAuthCommandOutput } from "@aws-sdk/client-cognito-identity-provider";
 import { tokenVerification } from "@/modules/auth/services/TokenVerification";
 import { TokenDTO } from "@/modules/auth/dto/tokenDTO";
