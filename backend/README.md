@@ -14,7 +14,6 @@ make start
 ```
 
 
-
 # Technical notes
 
 ## Env variables

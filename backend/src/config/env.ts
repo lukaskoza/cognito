@@ -4,6 +4,7 @@ import { cleanEnv, str, num } from 'envalid';
 export default cleanEnv(process.env, {
   // APPLICATION
   PORT: num({ default: 3000 }),
+  DATABASE_URL: str(),
 
   // AWS
   AWS_REGION: str(),
