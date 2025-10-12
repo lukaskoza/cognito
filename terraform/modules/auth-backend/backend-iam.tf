@@ -31,12 +31,3 @@ resource "aws_iam_user_policy_attachment" "backend_service_cognito" {
   user       = aws_iam_user.backend_service.name
   policy_arn = aws_iam_policy.cognito_admin.arn
 }
-
-
-output "iam_env_vars" {
-  value = {
-    AWS_ACCESS_KEY_ID  = aws_iam_access_key.backend_service.id
-    AWS_SECRET_ACCESS_KEY     = aws_iam_access_key.backend_service.secret
-  }
-  sensitive = true
-}
