@@ -5,6 +5,8 @@ import { InitiateAuthCommandOutput } from "@aws-sdk/client-cognito-identity-prov
 import { tokenVerification } from "./services/TokenVerification";
 import { TokenDTO } from "./dto/tokenDTO";
 import { SuccessDTO } from "../util/dto/successDTO";
+import { authentificate } from "./middlewares/authentificate";
+import { ProfileDTO } from "./dto/profileDTO";
 
 export const authModule = new Elysia({prefix: "/auth"})
 
@@ -36,8 +38,9 @@ export const authModule = new Elysia({prefix: "/auth"})
     return await TokenDTO.make(result, 'Token refreshed successfully');
   }, { body: refreshBody, response: TokenDTO.type() })
 
-  .get('/profile', async ({ headers }: { headers: any }) => {
-    const accessToken = tokenVerification.parseToken(headers.authorization)
-    const result = await tokenVerification.verify(accessToken)
-    return result
-  })
+  // Protected routes
+  .use(authentificate)
+  .get('/profile', async ({ userPayload }) => {
+    const result = await authService.getUser(userPayload.accessToken)
+    return await ProfileDTO.make(result, 'Profile fetched successfully');
+  }, { response: ProfileDTO.type() })

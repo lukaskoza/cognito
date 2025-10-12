@@ -1,4 +1,4 @@
-import { CognitoIdentityProviderClient, SignUpCommand, InitiateAuthCommand, AdminConfirmSignUpCommand, AdminDeleteUserCommand, RevokeTokenCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { CognitoIdentityProviderClient, SignUpCommand, InitiateAuthCommand, AdminConfirmSignUpCommand, AdminDeleteUserCommand, RevokeTokenCommand, GetUserCommand } from "@aws-sdk/client-cognito-identity-provider";
 import crypto from "crypto";
 import { ApplicationException } from "../../util/exceptions/ApplicationException";
 import env from "../../../config/env";
@@ -112,6 +112,18 @@ class AuthService {
                 REFRESH_TOKEN: refreshToken,
                 SECRET_HASH: this.calculateSecretHash(username),
             }
+        });
+
+        try {
+            return await this.cognitoClient.send(command);
+        } catch (error) {
+            this.handleCognitoError(error);
+        }
+    }
+
+    async getUser(accessToken: string) {
+        const command = new GetUserCommand({
+            AccessToken: accessToken,
         });
 
         try {

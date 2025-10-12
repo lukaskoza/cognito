@@ -13,6 +13,4 @@ const app = new Elysia()
   .use(authModule)
   .listen(env.PORT);
 
-console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
-);
+console.log(`Backend is running at http://${app.server?.hostname}:${app.server?.port}`);
