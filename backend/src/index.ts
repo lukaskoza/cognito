@@ -2,6 +2,7 @@ import { Elysia } from "elysia";
 import { authModule } from "./modules/auth";
 import { exceptionHandler } from "./modules/util/middlewares/exception-handler";
 import { swagger } from "@elysiajs/swagger";
+import env from "./config/env";
 
 const app = new Elysia()
   // Global middlewares
@@ -10,7 +11,7 @@ const app = new Elysia()
   
   // Application modules
   .use(authModule)
-  .listen(3000);
+  .listen(env.PORT);
 
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`

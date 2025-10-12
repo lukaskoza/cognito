@@ -1,6 +1,6 @@
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import { ApplicationException } from "../../util/exceptions/ApplicationException";
-
+import env from "../../../config/env";
 export class TokenVerification {
 
     parse(authHeader: string | undefined): string {
@@ -16,16 +16,9 @@ export class TokenVerification {
     }
 
     async verify(token: string, tokenUse: "id" | "access" = "access") {
-        if (!process.env.COGNITO_USER_POOL_ID) {
-            throw new ApplicationException("COGNITO_USER_POOL_ID is not set")
-        }
-        if (!process.env.COGNITO_CLIENT_ID) {
-            throw new ApplicationException("COGNITO_CLIENT_ID is not set")
-        }
-
         const verifier = CognitoJwtVerifier.create({
-            userPoolId: process.env.COGNITO_USER_POOL_ID,
-            clientId: process.env.COGNITO_CLIENT_ID,
+            userPoolId: env.COGNITO_USER_POOL_ID,
+            clientId: env.COGNITO_CLIENT_ID,
             tokenUse: tokenUse,
         })
         
