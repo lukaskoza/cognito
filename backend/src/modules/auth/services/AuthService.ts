@@ -2,6 +2,9 @@ import { CognitoIdentityProviderClient, SignUpCommand, InitiateAuthCommand, Admi
 import crypto from "crypto";
 import { ApplicationException } from "@/modules/util/exceptions/ApplicationException";
 import env from "@/config/env";
+import { CriticalException } from "@/modules/util/exceptions/CriticalException";
+import { userRepository } from "../repositories/UserRepository";
+import { flow, appError } from "@/modules/util/utils/rollback";
 class AuthService {
     private cognitoClient: CognitoIdentityProviderClient;
     private userPoolId: string;
@@ -36,16 +39,28 @@ class AuthService {
             SecretHash: this.calculateSecretHash(email),
         });
 
+
         try {
-            await this.cognitoClient.send(command);
-            await this.confirmUser(email)
-            return await this.login(email, password)
+            return await flow(async (flowChain) => {
+                flowChain
+                    .step(async () => {
+                        await this.cognitoClient.send(command);
+                    })
+                    .rollback(async () => {
+                        await this.deleteUser(email);
+                    })
+                    .step(appError('Registration failed'), async () => {
+                        await userRepository.create(email, email);
+                    })
+                    .rollback(async () => {
+                        await userRepository.delete(email);
+                    })
+                    .step(appError('Registration failed'), async () => {
+                        await this.confirmUser(email);
+                        return await this.login(email, password);
+                    })
+            })
         } catch (error) {
-            try {
-                await this.deleteUser(email)
-            } catch (error) {
-                // ignore error and throw original error, this would confuse the user because this is just rollback mechanism
-            }
             this.handleCognitoError(error);
         }
     }

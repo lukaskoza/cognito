@@ -5,12 +5,13 @@ import { swagger } from "@elysiajs/swagger";
 import env from "@/config/env";
 
 const app = new Elysia()
-  // Global middlewares
+//   // Global middlewares
   .use(swagger())
   .use(exceptionHandler)
   
-  // Application modules
+//   // Application modules
   .use(authModule)
+  .get("/", () => ({ status: "ok", message: "Service is running" }))
   .listen(env.PORT);
 
 console.log(`Backend is running at http://${app.server?.hostname}:${app.server?.port}`);

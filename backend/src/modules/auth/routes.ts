@@ -13,7 +13,6 @@ export const authModule = new Elysia({prefix: "/auth"})
   .post("/register", async ({ body }) => {
     const result = await authService.register(body.email, body.password) as InitiateAuthCommandOutput;
     return await TokenDTO.make(result, 'User registered successfully');
-    
   }, { body: registerBody, response: TokenDTO.type() })
   
   .post("/login", async ({ body }) => {

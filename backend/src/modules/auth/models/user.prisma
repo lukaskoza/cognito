@@ -1,0 +1,5 @@
+model User {
+    @@map("users")
+    sub String @unique
+    username String @unique
+}

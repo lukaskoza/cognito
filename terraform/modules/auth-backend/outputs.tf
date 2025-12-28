@@ -14,3 +14,11 @@ output "iam_env_vars" {
   }
   sensitive = true
 }
+
+output "cloudwatch_env_vars" {
+  description = "CloudWatch environment variables for backend application"
+  value = {
+    CLOUDWATCH_LOG_GROUP  = aws_cloudwatch_log_group.backend_app.name
+    CLOUDWATCH_AWS_REGION = data.aws_region.current.name
+  }
+}

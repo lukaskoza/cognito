@@ -1,5 +1,5 @@
 // src/config/env.ts
-import { cleanEnv, str, num } from 'envalid';
+import { cleanEnv, str, num, bool } from 'envalid';
 
 export default cleanEnv(process.env, {
   // APPLICATION
@@ -13,4 +13,11 @@ export default cleanEnv(process.env, {
   COGNITO_CLIENT_SECRET: str(),
   AWS_ACCESS_KEY_ID: str(),
   AWS_SECRET_ACCESS_KEY: str(),
+
+  // CloudWatch (optional - only needed when CLOUDWATCH_ENABLED=true)
+  CLOUDWATCH_ENABLED: bool({ default: false }),
+  CLOUDWATCH_LOG_GROUP: str({ default: undefined}),
+
+  // NODE_ENV
+  NODE_ENV: str({ default: 'production' }),
 });
