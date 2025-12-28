@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia, ValidationError } from "elysia";
 import { ApplicationException } from "@/modules/util/exceptions/ApplicationException";
 import { CriticalException } from "../exceptions/CriticalException";
 import { logger } from '@/modules/logger/services/Logger';
@@ -11,6 +11,7 @@ export const exceptionHandler = new Elysia()
             set.status = 404;
             return {
                 status: 'ERROR',
+                code: 'NOT_FOUND',
                 message: 'Route not found'
             }
         }
@@ -18,6 +19,7 @@ export const exceptionHandler = new Elysia()
         if (error instanceof ApplicationException) {
             return {
                 status: 'ERROR',
+                code: 'APPLICATION_ERROR',
                 message: error.message
             }
         }
@@ -29,7 +31,17 @@ export const exceptionHandler = new Elysia()
             });
             return {
                 status: 'ERROR',
+                code: 'CRITICAL_ERROR',
                 message: 'Critical error occurred'
+            }
+        }
+
+        if (error instanceof ValidationError) {
+            return {
+                status: 'ERROR',
+                code: 'VALIDATION_ERROR',
+                message: 'Validation error occurred',
+                errors: error.all
             }
         }
 

@@ -1,10 +1,8 @@
-import { CognitoIdentityProviderClient, SignUpCommand, InitiateAuthCommand, AdminConfirmSignUpCommand, AdminDeleteUserCommand, RevokeTokenCommand, GetUserCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { CognitoIdentityProviderClient, SignUpCommand, InitiateAuthCommand, AdminConfirmSignUpCommand, AdminDeleteUserCommand, RevokeTokenCommand, GetUserCommand, InitiateAuthCommandOutput, RevokeTokenCommandOutput, GetUserCommandOutput, AdminDeleteUserCommandOutput, AdminConfirmSignUpCommandOutput } from "@aws-sdk/client-cognito-identity-provider";
 import crypto from "crypto";
-import { ApplicationException } from "@/modules/util/exceptions/ApplicationException";
 import env from "@/config/env";
-import { CriticalException } from "@/modules/util/exceptions/CriticalException";
 import { userRepository } from "../repositories/UserRepository";
-import { flow, appError } from "@/modules/util/utils/rollback";
+import { flow, appError, originalError, simpleFlow } from "@/modules/rollback";
 class AuthService {
     private cognitoClient: CognitoIdentityProviderClient;
     private userPoolId: string;
@@ -40,54 +38,52 @@ class AuthService {
         });
 
 
-        try {
-            return await flow(async (flowChain) => {
-                flowChain
-                    .step(async () => {
-                        await this.cognitoClient.send(command);
-                    })
-                    .rollback(async () => {
-                        await this.deleteUser(email);
-                    })
-                    .step(appError('Registration failed'), async () => {
-                        await userRepository.create(email, email);
-                    })
-                    .rollback(async () => {
-                        await userRepository.delete(email);
-                    })
-                    .step(appError('Registration failed'), async () => {
-                        await this.confirmUser(email);
-                        return await this.login(email, password);
-                    })
+        const result = await flow()
+            .step(originalError(), async () => {
+                return await this.cognitoClient.send(command);
             })
-        } catch (error) {
-            this.handleCognitoError(error);
-        }
+            .rollback(async () => {
+                await this.deleteUser(email);
+            })
+            .step(appError('Registration failed', true), async () => {
+                return await userRepository.create(email, email);
+            })
+            .rollback(async () => {
+                await userRepository.delete(email);
+            })
+            .step(appError('Registration failed', true), async () => {
+                await this.confirmUser(email);
+                return await this.login(email, password);
+            })
+            .run()
+        
+        return result as InitiateAuthCommandOutput;
+
     }
 
-    async deleteUser(email: string) {
+    async deleteUser(email: string): Promise<AdminDeleteUserCommandOutput> {
         const command = new AdminDeleteUserCommand({
             Username: email,
             UserPoolId: this.userPoolId
         })
-        try {
+        return await simpleFlow(async () => {
             return await this.cognitoClient.send(command);
-        } catch (error) {
-            this.handleCognitoError(error);
-        }
+        });
     }
 
-    async confirmUser(email: string) {
+    async confirmUser(email: string): Promise<AdminConfirmSignUpCommandOutput> {
         const command = new AdminConfirmSignUpCommand({
             Username: email,
             UserPoolId: this.userPoolId
         })
 
-        return await this.cognitoClient.send(command);
+        return await simpleFlow(async () => {
+            return await this.cognitoClient.send(command);
+        });
     }
 
 
-    async login(email: string, password: string) {
+    async login(email: string, password: string): Promise<InitiateAuthCommandOutput> {
         const command = new InitiateAuthCommand({
             AuthFlow: 'USER_PASSWORD_AUTH',
             ClientId: this.clientId,
@@ -98,28 +94,25 @@ class AuthService {
             }
         });
 
-        try {
+        return await simpleFlow(async () => {
             return await this.cognitoClient.send(command);
-        } catch (error) {
-            this.handleCognitoError(error);
-        }
+        });
     }
 
 
-    async logout(refreshToken: string) {
+    async logout(refreshToken: string): Promise<RevokeTokenCommandOutput> {
         const command = new RevokeTokenCommand({
             Token: refreshToken,
             ClientId: this.clientId,
             ClientSecret: this.clientSecret,
         });
-        try {
+
+        return await simpleFlow(async () => {
             return await this.cognitoClient.send(command);
-        } catch (error) {
-            this.handleCognitoError(error);
-        }
+        });
     }
 
-    async refreshToken(username: string, refreshToken: string) {
+    async refreshToken(username: string, refreshToken: string): Promise<InitiateAuthCommandOutput> {
         const command = new InitiateAuthCommand({
             AuthFlow: 'REFRESH_TOKEN_AUTH',
             ClientId: this.clientId,
@@ -129,32 +122,19 @@ class AuthService {
             }
         });
 
-        try {
+        return await simpleFlow(async () => {
             return await this.cognitoClient.send(command);
-        } catch (error) {
-            this.handleCognitoError(error);
-        }
+        })
     }
 
-    async getUser(accessToken: string) {
+    async getUser(accessToken: string): Promise<GetUserCommandOutput> {
         const command = new GetUserCommand({
             AccessToken: accessToken,
         });
 
-        try {
+        return await simpleFlow(async () => {
             return await this.cognitoClient.send(command);
-        } catch (error) {
-            this.handleCognitoError(error);
-        }
-    }
-
-
-    private handleCognitoError(error: any) {
-        if (error instanceof ApplicationException) throw error
-        if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
-            throw new ApplicationException(error.message);
-        }
-        throw error;
+        })
     }
 }
 
